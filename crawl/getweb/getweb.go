@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hsmtkk/curly-couscous/getweb"
+	"github.com/hsmtkk/curly-couscous/html2md"
+	"github.com/hsmtkk/curly-couscous/http"
 	"github.com/spf13/cobra"
 )
 
@@ -17,8 +18,11 @@ var Command = &cobra.Command{
 }
 
 func run(url string) {
-	getter := getweb.New()
-	md, err := getter.GetWeb(url)
+	html, err := http.New().Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	md, err := html2md.New().Convert(html)
 	if err != nil {
 		log.Fatal(err)
 	}
