@@ -18,6 +18,7 @@ type Record struct {
 type Operator interface {
 	Write(r Record) error
 	Read() error
+	Find(title string) (Record, error)
 }
 
 type operatorImpl struct {
@@ -39,7 +40,7 @@ func (o *operatorImpl) Write(r Record) error {
 	var rc Record
 	err := o.db.First(&rc, "URL = ?", r.URL).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		if err := o.db.Create(r).Error; err != nil {
+		if err := o.db.Create(&r).Error; err != nil {
 			return fmt.Errorf("failed to create; %w", err)
 		}
 	} else {
@@ -52,4 +53,15 @@ func (o *operatorImpl) Write(r Record) error {
 
 func (o *operatorImpl) Read() error {
 	return nil
+}
+
+func (o *operatorImpl) Find(title string) (Record, error) {
+	rcs := []Record{}
+	if err := o.db.Where("title LIKE ?", "%" + title + "%").Find(&rcs).Error; err != nil {
+		return Record{}, fmt.Errorf("no matching title; %s; %w", title, err)
+	}
+	if len(rcs) == 0 {
+		return Record{}, fmt.Errorf("no matching title; %s", title)
+	}
+	return rcs[0], nil
 }
